@@ -82,6 +82,7 @@ for i=1:length(conditions)
     %might be individual proteins with too much variability, this should
     %not affect f calculation too much, meanwhile ensuring higher coverage.
     cd ../../limit_proteins
+    f = measureAbundance(ecModel.enzymes,prot.IDs,mean(abundances,2,'omitnan'));
     sumP = sum(mean(abundances,2,'omitnan'),'omitnan'); % Sum of measured proteome
     
     %Filter proteomics data, to only keep high quality measurements
@@ -141,7 +142,6 @@ for i=1:length(conditions)
         enzIndex = find(contains(tempModel.enzymes,matchedEnz{j}));
     end
     %Get model with proteomics
-    f       = 1; %Protein mass in model/Total theoretical proteome
     disp(['Incorporation of proteomics constraints for ' conditions{i} ' condition'])
     %Get sum of measured protein after filter, adding flexFactor and setting minimum value. 
     %If this is higher than the sum of raw measured protein (sumP), then increase the total 
