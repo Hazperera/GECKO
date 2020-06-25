@@ -77,9 +77,18 @@ for i=1:length(conditions)
     abundances   = cell2mat(absValues(1:grouping(i)));
     initialProts = uniprotIDs;
     absValues    = absValues(grouping(i)+1:end);
-    %Filter data
-    [pIDs, abundances] = filter_ProtData(uniprotIDs,abundances,1.96,true);
-    filteredProts      = pIDs;
+    
+    %Calculate sample-specific f-factor, before filtering data. While there
+    %might be individual proteins with too much variability, this should
+    %not affect f calculation too much, meanwhile ensuring higher coverage.
+    cd ../../limit_proteins
+    sumP = sum(mean(abundances,2,'omitnan'),'omitnan'); % Sum of measured proteome
+    
+    %Filter proteomics data, to only keep high quality measurements
+    cd ../utilities/integrate_proteomics
+    [pIDs, abundances] = filter_ProtData(prot.IDs,abundances,1.96,true);
+    
+    disp(['Filtered out ' num2str(round((1-(numel(pIDs)/numel(prot.IDs)))*100,1)) '% of protein measurements due to low quality.'])
     cd ..
     %correct oxPhos complexes abundances
     if ~isempty(oxPhos)
@@ -134,7 +143,15 @@ for i=1:length(conditions)
     %Get model with proteomics
     f       = 1; %Protein mass in model/Total theoretical proteome
     disp(['Incorporation of proteomics constraints for ' conditions{i} ' condition'])
-    [ecModelP,usagesT,modificationsT,~,coverage] = constrainEnzymes(ecModelP,f,GAM,Ptot(i),pIDs,abundances,Drate(i),flexGUR);
+    %Get sum of measured protein after filter, adding flexFactor and setting minimum value. 
+    %If this is higher than the sum of raw measured protein (sumP), then increase the total 
+    %protein content by the same ratio, so that the protein pool is receiving the similar 
+    %flexibilization as applied to the measured proteins.
+    sumPfilt = sum(abundances);
+    if sumPfilt>sumP
+        Ptot=flux.Ptot(i)*(sumPfilt/sumP);
+    end
+    [ecModelP,usagesT,modificationsT,~,coverage] = constrainEnzymes(ecModelP,f,GAM,Ptot,pIDs,abundances,flux.Drate(i),flexGUR);
     matchedProteins = usagesT.prot_IDs;
     prot_input = {initialProts filteredProts matchedProteins ecModel.enzymes coverage};
     writeProtCounts(conditions{i},prot_input,name); 
