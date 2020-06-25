@@ -40,8 +40,12 @@ Ptot_model = parameters.Ptot;
 bioRXN     = parameters.bioRxn;
 NGAM       = parameters.NGAM;
 GAM        = [];
+
 %Get oxPhos related rxn IDs
-oxPhos = getOxPhosRxnIDs(ecModel,parameters);
+if isfield(parameters,'oxPhos')
+    oxPhos = ecModel.rxns(startsWith(ecModel.rxns,parameters.oxPhos));
+end
+
 %create subfolder for ecModelProts output files
 mkdir(['../models/prot_constrained/' name])
 %Get indexes for carbon source uptake and biomass pseudoreactions
@@ -204,20 +208,6 @@ if ~isempty(compounds)
     end
 end
 disp(' ')
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function oxPhos = getOxPhosRxnIDs(model,parameters)
-if isfield(parameters,'oxPhos')
-    oxPhos = [];
-    for i=1:length(parameters.oxPhos)
-        ID = parameters.oxPhos{i};
-        isoEnzymes = model.rxns(find(contains(model.rxns,ID)));
-        isoEnzymes = isoEnzymes(~contains(isoEnzymes,'arm_'));
-        oxPhos = [oxPhos; isoEnzymes];
-    end
-else
-    oxPhos = [];
-end
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function writeProtCounts(condition,prot_parameters,name)
