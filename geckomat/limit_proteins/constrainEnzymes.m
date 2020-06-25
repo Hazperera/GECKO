@@ -83,12 +83,11 @@ Pmeasured      = sum(concs_measured);
 %Get protein content in biomass pseudoreaction:
 Pbase = sumProtein(model);
 if Pmeasured > 0
-    %Calculate fraction of non measured proteins in model out of remaining mass:
-    [fn,~] = measureAbundance(model.enzymes(~measured));
-    fm     = Pmeasured/Ptot;
-    f      = fn/(1-fm);
-    %Discount measured mass from global constrain:
-    fs = (Ptot - Pmeasured)/Pbase*f*sigma;
+    %Expected total enzyme concentration
+    enzymeConc=Ptot*f;
+    %Non-measured part will be pooled
+    Ppool=enzymeConc-Pmeasured;
+    fs=Ppool/Pbase;
 else
     fs = f*sigma;
 end
