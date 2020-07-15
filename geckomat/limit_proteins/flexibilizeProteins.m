@@ -35,6 +35,7 @@ flexFactor    = 100;
 flexProts     = {};
 enzUsages     = [];
 modifications = {};
+protPoolflex  = [0, getIndexes(tempModel,'prot_pool_exchange','rxns')];
 %constrain glucose uptake if an experimental measurement is provided
 if nargin > 2
     glucUptkIndx           = strcmp(model.rxnNames,c_source);
@@ -73,9 +74,17 @@ if ~isempty(measuredIndxs)
                warning(['Unfeasible flexibilization of ' model.rxnNames{indx} ' UB'])
                gRate = growth;
             end
+        elseif protPoolflex(1)<5
+            %In case that no limiting enzymes have been found then flexibilize
+            %the protein pool constraint to a maximum of 105% (1.01^5=5.1%).
+            tempModel.ub(protPoolflex(2)) = tempModel.ub(protPoolflex(2))*1.01;
+            sol = solveLP(tempModel);
+            protPoolflex(1)=protPoolflex(1)+1;
+            disp(['Increased protein pool constraint by a total of ' num2str(protPoolflex) '%'])
+            growth = sol.x(objIndex);
         else
-            %In case that no limiting enzymes have been found then proceed 
-            %with a suboptimal growth rate (this makes the while loop to break)
+            %If slightly relaxing protein pool does not work, proceed with a
+            %suboptimal growth rate (this makes the while loop to break)
             warning('No limiting enzymes were found')
             gRate = growth;
         end
