@@ -1,4 +1,4 @@
- function [model,enzUsages,modifications,GAM,massCoverage] = constrainEnzymes(model,f,GAM,Ptot,pIDs,data,gRate,c_UptakeExp)
+ function [model,enzUsages,modifications,GAM,massCoverage] = constrainEnzymes(model,f,GAM,Ptot,pIDs,data,gRate,c_UptakeExp,parameters)
 % constrainEnzymes
 %
 %   Main function for overlaying proteomics data on an enzyme-constrained
@@ -33,11 +33,14 @@
 %
 
 %get model parameters
-cd ..
-parameters = getModelParameters;
+if nargin<9
+    cd ..
+    parameters = getModelParameters;
+    cd limit_proteins
+end
 sigma      = parameters.sigma;
 c_source   = parameters.c_source;
-cd limit_proteins
+
 %Compute f if not provided:
 if nargin < 2
     [f,~] = measureAbundance(model.enzymes);
